@@ -1,0 +1,48 @@
+---
+title: "My First Intro RMarkdown Document"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages, message=FALSE}
+library(tidyverse)
+```
+
+# Introduction
+
+- read in data
+
+```{r read-data, message=FALSE}
+bg_chem <- read_csv(here::here("data", "BGchem2008data.csv"))
+```
+
+# Analysis
+
+- calculate summary statistics
+
+```{r summary-stats}
+nitrate <- mean(bg_chem$NO3)
+nitrite <- mean(bg_chem$NO2)
+amm <- mean(bg_chem$NH4)
+phos <- mean(bg_chem$P)
+```
+
+- calculate mean redfield ratio
+
+```{r redfield-ratio}
+ratio <- (nitrate + nitrite + amm)/phos
+```
+
+The calculated Redfield ratio is `r round(ratio, 3)`.
+
+- plot redfield ratio
+
+```{r plot-redfield-ratio, echo = FALSE}
+plot(bg_chem$P, bg_chem$NO2 + bg_chem$NO3 + bg_chem$NH4)
+```
+
