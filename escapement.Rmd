@@ -1,0 +1,72 @@
+---
+title: "Data viz"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, load packages}
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(DT)
+library(scales) # install.packages("scales")
+```
+
+```{r, load data}
+# get data url from the knb
+data_url <- "https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Af119a05b-bbe7-4aea-93c6-85434dcb1c5e"
+
+# load escapement data
+esc <- tryCatch(
+  read.csv("data/escapement.csv"),
+  error=function(cond) {
+    message(paste("Escapement file does not seem to exist, so get it from the KNB."))
+    esc <- read.csv(url(data_url, method = "libcurl"))
+    return(esc)
+  }
+)
+
+# check out the head of the data
+head(esc)
+```
+
+Challenge: calculate annual escapement by species and region
+```{r}
+annual_esc <- esc %>% 
+  separate(sampleDate, into = c("year", "month", "day"), sep = "-") %>% 
+  mutate(year = as.numeric(year)) %>% 
+  filter(Species %in% c("Chinook", "Sockeye", "Chum", "Coho", "Pink")) %>% 
+  group_by(Species, SASAP.Region, year) %>% 
+  summarize(total_esc = sum(DailyCount)) 
+```
+
+```{r}
+ggplot(annual_esc, mapping = aes(x = Species, y = total_esc, fill = SASAP.Region)) + 
+  geom_col()
+```
+
+```{r}
+sams_theme <- theme_classic() + 
+  theme(
+    legend.position = "bottom"
+  )
+```
+
+
+```{r}
+annual_esc %>% 
+  filter(SASAP.Region == "Kodiak") %>% 
+  ggplot(aes(x = year, y = total_esc, color = Species)) +
+  geom_point() + 
+  geom_line() +
+  scale_y_continuous(labels = comma) +
+  labs(x = "Year", y = "Total Salmon Escapement") +
+  sams_theme
+```
+
